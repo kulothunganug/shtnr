@@ -98,7 +98,7 @@ func (s *Server) redirectHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	sqlDB, err := sql.Open("sqlite", "urls.db")
+	sqlDB, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
 		log.Fatal(err)
 	}
