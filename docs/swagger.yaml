@@ -1,0 +1,63 @@
+definitions:
+  main.ShortenRequest:
+    properties:
+      url:
+        example: https://www.example.com/very/long/url
+        type: string
+    required:
+    - url
+    type: object
+  main.ShortenResponse:
+    properties:
+      short_url:
+        example: http://localhost:8080/abc123
+        type: string
+    type: object
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: A simple URL shortening service that creates short codes for long URLs.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: URL Shortener API
+  version: "1.0"
+paths:
+  /shorten:
+    post:
+      consumes:
+      - application/json
+      description: Creates a short code for the provided URL
+      parameters:
+      - description: URL to shorten
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.ShortenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.ShortenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "405":
+          description: Method Not Allowed
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Shorten a URL
+      tags:
+      - urls
+swagger: "2.0"

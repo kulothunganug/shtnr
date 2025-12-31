@@ -13,6 +13,9 @@ import (
 
 	"shtnr/db"
 
+	docs "shtnr/docs"
+
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 	_ "modernc.org/sqlite"
 )
 
@@ -24,11 +27,11 @@ type Server struct {
 }
 
 type ShortenRequest struct {
-	URL string `json:"url"`
+	URL string `json:"url" example:"https://www.example.com/very/long/url" binding:"required"`
 }
 
 type ShortenResponse struct {
-	ShortURL string `json:"short_url"`
+	ShortURL string `json:"short_url" example:"http://localhost:8080/abc123"`
 }
 
 func generateShortCode() string {
@@ -37,6 +40,19 @@ func generateShortCode() string {
 	return base64.URLEncoding.EncodeToString(bytes)[:8]
 }
 
+// shortenHandler godoc
+//
+//	@Summary		Shorten a URL
+//	@Description	Creates a short code for the provided URL
+//	@Tags			urls
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		ShortenRequest	true	"URL to shorten"
+//	@Success		200		{object}	ShortenResponse
+//	@Failure		400		{string}	string	"Bad Request"
+//	@Failure		405		{string}	string	"Method Not Allowed"
+//	@Failure		500		{string}	string	"Internal Server Error"
+//	@Router			/shorten [post]
 func (s *Server) shortenHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -67,7 +83,7 @@ func (s *Server) shortenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := ShortenResponse{
-		ShortURL: "http://localhost:8080/" + shortCode,
+		ShortURL: "http://" + r.Host + "/" + shortCode,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -97,6 +113,18 @@ func (s *Server) redirectHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, url.OriginalUrl, http.StatusFound)
 }
 
+// @title URL Shortener API
+// @version 1.0
+// @description A simple URL shortening service that creates short codes for long URLs.
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+
 func main() {
 	sqlDB, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
@@ -120,6 +148,15 @@ func main() {
 	}
 
 	http.HandleFunc("/shorten", server.shortenHandler)
+	http.Handle("/swagger/", httpSwagger.Handler(
+		httpSwagger.URL("/docs/doc.json"),
+	))
+
+	http.HandleFunc("/docs/doc.json", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(docs.SwaggerInfo.ReadDoc()))
+	})
+
 	http.HandleFunc("/", server.redirectHandler)
 
 	log.Println("Server starting on :8080")
